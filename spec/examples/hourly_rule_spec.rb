@@ -1,4 +1,4 @@
-require File.dirname(__FILE__) + '/../spec_helper'
+re File.dirname(__FILE__) + '/../spec_helper'
 
 module IceCube
   describe HourlyRule do
@@ -39,13 +39,14 @@ module IceCube
       end
 
       it 'should not skip times in DST end hour' do
-        schedule = Schedule.new(t0 = Time.local(2013, 11, 3, 0, 0, 0))
+        tz = ActiveSupport::TimeZone["America/Vancouver"]
+        schedule = Schedule.new(t0 = tz.local(2013, 11, 3, 0, 0, 0))
         schedule.add_recurrence_rule Rule.hourly
-        schedule.first(4).should == [
-          Time.local(2013, 11, 3, 0, 0, 0),             # -0700
-          Time.local(2013, 11, 3, 1, 0, 0) - ONE_HOUR,  # -0700
-          Time.local(2013, 11, 3, 1, 0, 0),             # -0800
-          Time.local(2013, 11, 3, 2, 0, 0),             # -0800
+        expect(schedule.first(4)).to eq [
+          tz.local(2013, 11, 3, 0, 0, 0),             # -0700
+          tz.local(2013, 11, 3, 1, 0, 0),             # -0700
+          tz.local(2013, 11, 3, 2, 0, 0) - ONE_HOUR,  # -0800
+          tz.local(2013, 11, 3, 2, 0, 0),             # -0800
         ]
       end
 
@@ -55,7 +56,7 @@ module IceCube
       schedule = double(start_time: t0 = Time.now)
       rule = Rule.hourly(7)
       rule.interval(5)
-      rule.next_time(t0 + 1, schedule, nil).should == t0 + 5.hours
+      rule.next_time(t0 + 1, schedule, nil).should == t0 + 5 * ONE_HOUR
     end
 
     it 'should produce the correct days for @interval = 3' do

@@ -7,19 +7,30 @@ module IceCube
         (property, tzid) = property.split(';')
         case property
         when 'DTSTART'
-          data[:start_time] = Time.parse(value)
+          data[:start_time] = _parse_in_tzid(value, tzid)
         when 'DTEND'
-          data[:end_time] = Time.parse(value)
+          data[:end_time] = _parse_in_tzid(value, tzid)
         when 'EXDATE'
           data[:extimes] ||= []
-          data[:extimes] += value.split(',').map{|v| Time.parse(v)}
+          data[:extimes] += value.split(',').map do |v|
+            _parse_in_tzid(v, tzid)
+          end
         when 'DURATION'
           data[:duration] # FIXME
         when 'RRULE'
-          data[:rrules] = [rule_from_ical(value)]
+          data[:rrules] ||= []
+          data[:rrules] += [rule_from_ical(value)]
         end
       end
       Schedule.from_hash data
+    end
+
+    def self._parse_in_tzid(value, tzid)
+      time_parser = Time
+      if tzid
+        time_parser = ActiveSupport::TimeZone.new(tzid.split('=')[1]) || Time
+      end
+      time_parser.parse(value)
     end
 
     def self.rule_from_ical(ical)
